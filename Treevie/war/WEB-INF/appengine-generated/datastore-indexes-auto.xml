@@ -1,11 +1,4 @@
-<!-- Indices written at Thu, 25 Oct 2012 15:53:02 IST -->
+<!-- Indices written at Sat, 27 Oct 2012 03:03:10 IST -->
 
-<datastore-indexes>
+<datastore-indexes/>
 
-    <!-- Used 7 times in query history -->
-    <datastore-index kind="Question" ancestor="false" source="auto">
-        <property name="rand" direction="asc"/>
-        <property name="lastDisplayed" direction="asc"/>
-    </datastore-index>
-
-</datastore-indexes>

@@ -11,7 +11,10 @@ import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.EmbeddedEntity;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.FetchOptions;
+import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.Filter;
@@ -21,8 +24,12 @@ import com.google.appengine.api.datastore.Query.SortDirection;
 
 public class Question {
 	private String question;
+	private String series;
+	private Long level;
 	private final List<Answer> wrongAnswers = new ArrayList<Answer>();
 	private Answer rightAnswer;
+	private Key key = null;
+	
 	Calendar tempDate = new GregorianCalendar(2011, 1, 1);
 	private Date lastDisplayed = tempDate.getTime();
 	
@@ -73,16 +80,22 @@ public class Question {
 			
 		}
 	}
+
 	
 	/*
 	 * this constructor is for getting a Question object from a fetched entity
 	 */
 	public Question (Entity entity) {
-		this.question = (String) entity.getProperty("question");
+		
 		try {
+			this.question = (String) entity.getProperty("question");
+			this.series = (String) entity.getProperty("series");
+			this.level = (Long) entity.getProperty("level");
 			this.rightAnswer = new Answer ((EmbeddedEntity) entity.getProperty("rightAnswer"));
+			this.key = entity.getKey();
 		} catch (NullPointerException e) {
-			this.rightAnswer = null;
+//			this.rightAnswer = null;
+			System.out.println("some property is missing");
 		}
 		
 		Object objectAnswers = entity.getProperty("wrongAnswer");
@@ -96,6 +109,11 @@ public class Question {
 	
 	public Question (String arg) {
 		this.question = arg;
+	}
+	
+	static void delete (Key key) {
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		datastore.delete(key);
 	}
 	
 	public String getQuestion() {
@@ -117,7 +135,21 @@ public class Question {
 	public List<Answer> getWrongAnswers () {
 		return this.wrongAnswers;
 	}
-	
+	public String getSeries() {
+		return series;
+	}
+
+	public void setSeries(String series) {
+		this.series = series;
+	}
+
+	public Long getLevel() {
+		return level;
+	}
+
+	public void setLevel(Long level) {
+		this.level = level;
+	}
 	
 	public Date getLastDisplayed() {
 		return lastDisplayed;
@@ -126,36 +158,54 @@ public class Question {
 	public void setLastDisplayed(Date lastDisplayed) {
 		this.lastDisplayed = lastDisplayed;
 	}
+	public Key getKey() {
+		return key;
+	}
+	public void setKey(Key key) {
+		this.key = key;
+	}
+	public String getKeyString() {
+		return KeyFactory.keyToString(this.key);
+	}
 
 	public Boolean persist () {
-		return this.persist(false);
-	}
-	public Boolean persist (Boolean anew) {
 		Boolean success = false;
 		
-		if (anew) {  // insert a new question
-			DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-			Entity questionEntity = new Entity("Question");
-			questionEntity.setProperty("question", this.question);
-			questionEntity.setProperty("lastDisplayed", this.lastDisplayed);
-			
-			Random randomGenerator = new Random();
-			double rand = randomGenerator.nextDouble();
-			questionEntity.setProperty("rand", rand);
-			
-			questionEntity.setProperty ("rightAnswer", this.rightAnswer.embed() );
-			
-			List<EmbeddedEntity> embeddedAnswers = new ArrayList<EmbeddedEntity> ();
-			
-			// convert the answers to embeddable entities
-			for (Answer temp : this.wrongAnswers) {
-				embeddedAnswers.add( temp.embed() );
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		Entity questionEntity;
+		if (this.key == null) {  // insert a new question
+			questionEntity = new Entity("Question");
+			this.key = questionEntity.getKey();
+		} else {
+			try {
+				questionEntity = datastore.get(this.key);
+			} catch (EntityNotFoundException e) {
+				return false;
 			}
-			questionEntity.setProperty ("wrongAnswer", embeddedAnswers);
-			
-			// TODO: handle some rare exceptions
-			datastore.put(questionEntity);
 		}
+		
+		
+		questionEntity.setProperty("question", this.question);
+		questionEntity.setProperty("lastDisplayed", this.lastDisplayed);
+		questionEntity.setProperty("level", this.level);
+		questionEntity.setProperty("series", series);
+		
+		Random randomGenerator = new Random();
+		double rand = randomGenerator.nextDouble();
+		questionEntity.setProperty("rand", rand);
+		
+		questionEntity.setProperty ("rightAnswer", this.rightAnswer.embed() );
+		
+		List<EmbeddedEntity> embeddedAnswers = new ArrayList<EmbeddedEntity> ();
+		
+		// convert the answers to embeddable entities
+		for (Answer temp : this.wrongAnswers) {
+			embeddedAnswers.add( temp.embed() );
+		}
+		questionEntity.setProperty ("wrongAnswer", embeddedAnswers);
+		
+		// TODO: handle some rare exceptions
+		datastore.put(questionEntity);
 		return success;
 	}
 	

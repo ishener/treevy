@@ -22,6 +22,18 @@
 			<br/> <c:out value="${ans.answer}"></c:out> 
 		</c:forEach>
 	</p>
+	<p>
+		Series:
+		<c:out value="${ques.series}"></c:out>
+	</p>
+	<p>
+		Level:
+		<c:out value="${ques.level}"></c:out>
+	</p>
+	<p>
+		<a href="/add-question?action=edit&key=${ques.keyString}">Edit</a>
+		<a href="/add-question?action=delete&key=${ques.keyString}">Delete</a>
+	</p>
 </c:forEach>
 
 </div>

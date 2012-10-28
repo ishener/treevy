@@ -13,6 +13,7 @@ import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.FetchOptions;
+import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
 
@@ -30,7 +31,9 @@ public class AddQuestion extends HttpServlet {
 		newq.addWrongAnswer(req.getParameter("wrong-1"));
 		newq.addWrongAnswer(req.getParameter("wrong-2"));
 		newq.addWrongAnswer(req.getParameter("wrong-3"));
-		newq.persist(true);
+		newq.setLevel( Long.parseLong (req.getParameter("level")));
+		newq.setSeries(req.getParameter("series"));
+		newq.persist();
 		
 		resp.getWriter().println("Successfully persisted new question");
 	}
@@ -40,6 +43,14 @@ public class AddQuestion extends HttpServlet {
 	 */
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
+		if ( req.getParameter("action") != null ) {
+			if ( req.getParameter("action").equals("delete") ) {
+				String webKey = req.getParameter("key");
+				Question.delete(KeyFactory.stringToKey(webKey));
+			} else {
+				// edit
+			}
+		}
 		// TODO: pager for ques
 		List<Question> questions = new ArrayList<Question>();
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
