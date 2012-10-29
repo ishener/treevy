@@ -128,6 +128,9 @@ public class Question {
 	public void setRightAnswer (String ans) {
 		this.rightAnswer = new Answer (ans, 0);
 	}
+	public void emptyWrongAnswers () {
+		this.wrongAnswers.clear();
+	}
 	
 	public void addWrongAnswer ( String ans ) {
 		wrongAnswers.add (new Answer(ans, 0));
